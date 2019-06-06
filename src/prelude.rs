@@ -8,4 +8,3 @@ pub use crate::deck::Deck;
 pub use crate::player::{Player,Action,Interrupt,Trigger};
 pub use crate::enemy::Enemy;
 pub use crate::loot::{Loot,LootInner,Item,Potion,Helmet};
-//pub use crate::interrupt::Interrupt;
