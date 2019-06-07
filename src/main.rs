@@ -61,9 +61,7 @@ fn main() {
 					},
 				}
 			}
-			if let Some(e) = gen_event(wins, &mut event_pool) {
-				e(player, enemies, &commands);
-			}
+			crate::events::run_event(wins, &mut event_pool, player, enemies, &commands);
 			if enemies.is_empty() {
 				*enemies = gen_enemies(wins, player);
 			}
@@ -86,6 +84,27 @@ fn main() {
 			},
 			Discard(n) => { player.discard(n, false, enemies); },
 			Play(n, target) => { player.play(n, target, enemies); },
+			Save(mut path) => {
+				path += ".sav";
+				if let Ok(file) = std::fs::File::create(path) {
+					if let Err(e) = serialize_into(file, &(&wins, &player, &enemies, &event_pool)) {
+						println!("error while saving: {:?}",e);
+					} else {
+						println!("saved");
+					}
+				}
+			},
+			Load(mut path) => {
+				path += ".sav";
+				if let Ok(file) = std::fs::File::open(path) {
+					if let Ok((w, p, e, ep)) = deserialize_from(file) {
+						wins = w;
+						*player = p;
+						*enemies = e;
+						event_pool = ep;
+					}
+				}
+			},
 			Stop => break 'a,
 			Numbers(_) | Yes | No => println!("unknown command"),
 		}
@@ -118,17 +137,4 @@ fn gen_loot(_wins: u64) -> (usize, Vec<Loot>) {
 	(2,
 	vec!(Loot(vec!(LootInner::Cards(50, PommelStrike.into()), LootInner::Cards(50, CripplingStabs.into()), LootInner::Cards(50, SwordDraw.into()).into())),
 	Loot(vec!(LootInner::LootItem(Item::Helmet(Helmet::HelmOfIntelligence))))))
-}
-
-use std::rc::Rc;
-
-fn gen_event(_wins: u64, pool: &mut Vec<(bool, Rc<Fn(&mut Player, &mut Vec<Enemy>, &terminal::Terminal<Command>)>)>)
-	-> Option<Rc<Fn(&mut Player, &mut Vec<Enemy>, &terminal::Terminal<Command>)>>
-{
-	if random::<f64>() > 0.5 {
-		let idx = random::<usize>() % pool.len();
-		Some(if pool[idx].0 { pool.remove(idx).1 } else { pool[idx].1.clone() })
-	} else {
-		None
-	}
 }

@@ -6,6 +6,8 @@ pub enum Command {
 	Play(usize, Option<usize>),
 	Yes,
 	No,
+	Save(String),
+	Load(String),
 	Stop,
 }
 
@@ -69,6 +71,18 @@ impl Parse for Command {
 					println!("input a card number to play");
 					None
 				}
+				"save" => if let Some(w) = words.pop() {
+					Some(Save(w.to_string()))
+				} else {
+					println!("input a file name to save to");
+					None
+				},
+				"load" => if let Some(w) = words.pop() {
+					Some(Load(w.to_string()))
+				} else {
+					println!("input a file name to load from");
+					None
+				}
 				"stop" => Some(Stop),
 				_ => {
 					if w.starts_with('y') {
@@ -76,7 +90,7 @@ impl Parse for Command {
 					} else if w.starts_with('n') {
 						Some(No)
 					} else {
-						println!("commands are: end, discard, play, stop");
+						println!("commands are: end, discard, play, save, load, stop");
 						None
 					}
 				}

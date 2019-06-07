@@ -3,13 +3,26 @@ use crate::prelude::*;
 use crate::terminal_command::Command;
 use self::Command::*;
 
-use std::rc::Rc;
+const EVENTS: &[(bool, &Fn(&mut Player, &mut Vec<Enemy>, &terminal::Terminal<Command>))] = &[
+	(true, &andrews_thing),
+	(false, &hp_for_curses),
+];
 
-pub fn gen_event_pool() -> Vec<(bool, Rc<Fn(&mut Player, &mut Vec<Enemy>, &terminal::Terminal<Command>)>)> {
+pub fn gen_event_pool() -> Vec<usize> {
 	vec!(
-		(true, Rc::new(andrews_thing)),
-		(false, Rc::new(hp_for_curses)),
+		0,
+		1,
 	)
+}
+
+pub fn run_event(_wins: u64, pool: &mut Vec<usize>, p: &mut Player, e: &mut Vec<Enemy>, c: &terminal::Terminal<Command>) {
+	if random::<f64>() > 0.5 {
+		let n = random::<usize>() % pool.len();
+		EVENTS[pool[n]].1(p, e, c);
+		if EVENTS[pool[n]].0 {
+			pool.remove(n);
+		}
+	}
 }
 
 pub fn get_statement(c: &terminal::Terminal<Command>) -> bool {

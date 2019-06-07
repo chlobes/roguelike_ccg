@@ -1,6 +1,7 @@
 pub use std::collections::HashMap;
 pub use std::{mem,fmt};
 pub use serde::{Serialize,Deserialize};
+pub use bincode::{serialize_into,deserialize_from};
 pub use serde_traitobject::Box;
 pub use rand::random;
 pub use crate::card::{Card,CardType};

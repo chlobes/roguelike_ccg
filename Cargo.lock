@@ -958,7 +958,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "roguelike"
+name = "roguelike_ccg"
 version = "0.1.0"
 dependencies = [
  "array_tuple 0.1.0 (git+https://github.com/pypypypypypypypypyp/array_tuple)",
@@ -969,7 +969,7 @@ dependencies = [
  "limiter 0.1.0 (git+https://github.com/pypypypypypypypypyp/limiter)",
  "log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "math_lib 0.1.0 (git+https://github.com/pypypypypypypypypyp/math_lib)",
- "rand 0.6.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rand 0.5.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.91 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_traitobject 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "terminal 0.1.0 (git+https://github.com/pypypypypypypypypyp/terminal)",
