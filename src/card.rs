@@ -123,13 +123,17 @@ impl Card {
 					Err(NeedsTarget)
 				}
 			},
-			
+			Barrier => {
+				player.block += (100 + self.block_modifier).max(1);
+				Ok(())
+			}
 			_ => Err(PlayError::Unplayable),
 		}
 	}
 	
 	pub fn ethereal(&self) -> bool {
 		match self.typ {
+			Barrier => true,
 			Dazed => true,
 			Fear => true,
 			Exhaustion => true,
@@ -171,6 +175,7 @@ impl Card {
 			PommelStrike => Some(1),
 			CripplingStabs => Some(2),
 			SwordDraw => Some(1),
+			Barrier => Some(5),
 			Dazed => None,
 			Fear => None,
 			Unease => None,
@@ -186,6 +191,7 @@ impl Card {
 			PommelStrike => Some(1),
 			CripplingStabs => Some(1),
 			SwordDraw => Some(1),
+			Barrier => Some(2),
 			Dazed => None,
 			Fear => None,
 			Unease => Some(-1),
@@ -213,6 +219,7 @@ impl Card {
 			PommelStrike => format!("deal {} to target and draw a card",(3+self.damage_modifier+player.strength).max(1)),
 			CripplingStabs => format!("deal {} to target twice and reduce its strength by 2",(3+self.damage_modifier+player.strength).max(1)),
 			SwordDraw => format!("deal {} to target and gain 1 strength for 3 turns",(2+self.damage_modifier+player.strength).max(1)),
+			Barrier => format!("ethereal, gain {} block",(100+self.block_modifier).max(1)),
 			Dazed => format!("unplayable, undiscardable, ethereal"),
 			Fear => format!("unplayable, undiscardable, ethereal, when you draw this lose 3 mana"),
 			Unease => format!("unplayable, fleeting"),
@@ -282,6 +289,7 @@ impl fmt::Display for CardType {
 			PommelStrike => write!(f,"pommel strike"),
 			CripplingStabs => write!(f,"crippling stabs"),
 			SwordDraw => write!(f,"sword draw"),
+			Barrier => write!(f,"barrier"),
 			Dazed => write!(f,"dazed"),
 			Fear => write!(f,"fear"),
 			Unease => write!(f,"unease"),
@@ -302,6 +310,7 @@ pub enum CardType {
 	PommelStrike,
 	CripplingStabs,
 	SwordDraw,
+	Barrier,
 	//status
 	Dazed,
 	Fear,
