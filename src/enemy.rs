@@ -3,7 +3,7 @@ use crate::prelude::*;
 use self::Intent::*;
 use self::EnemyType::*;
 
-#[derive(Debug,Clone,Serialize,Deserialize)]
+#[derive(Serialize,Deserialize)]
 pub struct Enemy {
 	typ: EnemyType,
 	pub hp: i64,
@@ -11,6 +11,7 @@ pub struct Enemy {
 	strength: i64,
 	intent: Intent,
 	data: Vec<i64>,
+	pub triggers: HashMap<i64, Box<ETrigger>>,
 }
 
 impl Enemy {
@@ -29,6 +30,13 @@ impl Enemy {
 	
 	pub fn activate(&mut self, player: &mut Player, enemies: &mut Vec<Enemy>) {
 		self.block = 0;
+		let ids = self.triggers.keys().cloned().collect::<Vec<_>>();
+		for id in ids {
+			let mut t = mem::replace(self.triggers.get_mut(&id).unwrap(), Box::new(BlankTriggerImpl));
+			if !t.trigger(self, player, enemies) {
+				self.triggers.insert(id, t);
+			}
+		}
 		match self.intent {
 			Attack(n) => {
 				self.attack(n, player, enemies);
@@ -139,6 +147,7 @@ impl From<EnemyType> for Enemy {
 				strength: 0,
 				intent: Attack((random::<u64>() % 3 + 4) as i64),
 				data: vec!((random::<u64>() % 3 + 5) as i64),
+				triggers: HashMap::new(),
 			},
 			Sentry => {
 				let x = (random::<u64>() % 3) as i64;
@@ -149,6 +158,7 @@ impl From<EnemyType> for Enemy {
 					strength: 0,
 					intent: if x == 1 { Debuff } else { Attack(8) },
 					data: vec!(x),
+					triggers: HashMap::new(),
 				}
 			},
 		}
@@ -190,5 +200,18 @@ impl fmt::Display for Intent {
 			Buff => write!(f,"using a buff"),
 			Unknown => write!(f,"intentions are unknown"),
 		}
+	}
+}
+
+pub trait ETrigger: serde_traitobject::Serialize + serde_traitobject::Deserialize {
+	#[must_use]
+	fn trigger(&mut self, e: &mut Enemy, p: &mut Player, es: &mut Vec<Enemy>) -> bool;
+}
+
+#[derive(Serialize,Deserialize)]
+struct BlankTriggerImpl;
+impl ETrigger for BlankTriggerImpl {
+	fn trigger(&mut self, _e: &mut Enemy, _p: &mut Player, _es: &mut Vec<Enemy>) -> bool {
+		false
 	}
 }

@@ -379,7 +379,6 @@ impl fmt::Display for Player {
 	}
 }
 
-#[derive(Debug)]
 pub enum Action<'a> {
 	EndTurn,
 	StartTurn,
