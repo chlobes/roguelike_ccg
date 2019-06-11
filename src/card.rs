@@ -131,6 +131,7 @@ impl Card {
 	pub fn ethereal(&self) -> bool {
 		match self.typ {
 			Dazed => true,
+			Fear => true,
 			Exhaustion => true,
 			_ => false,
 		}
@@ -143,12 +144,9 @@ impl Card {
 		}
 	}
 	
-	pub fn draw(&mut self, _player: &mut Player, _enemies: &mut Vec<Enemy>) {
+	pub fn draw(&mut self, player: &mut Player, _enemies: &mut Vec<Enemy>) {
 		match self.typ {
-			//basic
-			
-			//curses
-			
+			Fear => player.mana -= 3,
 			_ => {},
 		}
 	}
@@ -174,6 +172,7 @@ impl Card {
 			CripplingStabs => Some(2),
 			SwordDraw => Some(1),
 			Dazed => None,
+			Fear => None,
 			Unease => None,
 			Stress => None,
 			Exhaustion => None,
@@ -188,6 +187,7 @@ impl Card {
 			CripplingStabs => Some(1),
 			SwordDraw => Some(1),
 			Dazed => None,
+			Fear => None,
 			Unease => Some(-1),
 			Stress => Some(0),
 			Exhaustion => None,
@@ -214,6 +214,7 @@ impl Card {
 			CripplingStabs => format!("deal {} to target twice and reduce its strength by 2",(3+self.damage_modifier+player.strength).max(1)),
 			SwordDraw => format!("deal {} to target and gain 1 strength for 3 turns",(2+self.damage_modifier+player.strength).max(1)),
 			Dazed => format!("unplayable, undiscardable, ethereal"),
+			Fear => format!("unplayable, undiscardable, ethereal, when you draw this lose 3 mana"),
 			Unease => format!("unplayable, fleeting"),
 			Stress => format!("unplayable, fleeting, when you discard this, lose 10 hp"),
 			Exhaustion => format!("unplayable, undiscardable, ethereal, whenever you play or discard a card, lose 4 hp"),
@@ -282,6 +283,7 @@ impl fmt::Display for CardType {
 			CripplingStabs => write!(f,"crippling stabs"),
 			SwordDraw => write!(f,"sword draw"),
 			Dazed => write!(f,"dazed"),
+			Fear => write!(f,"fear"),
 			Unease => write!(f,"unease"),
 			Stress => write!(f,"stress"),
 			Exhaustion => write!(f,"exhaustion"),
@@ -302,6 +304,7 @@ pub enum CardType {
 	SwordDraw,
 	//status
 	Dazed,
+	Fear,
 	//curses
 	Unease,
 	Stress,
