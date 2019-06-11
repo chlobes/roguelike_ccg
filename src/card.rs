@@ -126,7 +126,53 @@ impl Card {
 			Barrier => {
 				player.block += (100 + self.block_modifier).max(1);
 				Ok(())
-			}
+			},
+			Fortify => {
+				#[derive(Serialize,Deserialize)]
+				struct F(usize);
+				impl Trigger for F {
+					fn trigger(&mut self, a: Action, p: &mut Player, _e: &mut Vec<Enemy>) -> bool {
+						if let Action::StartTurn = a {
+							self.0 -= 1;
+							p.block += 2;
+						}
+						self.0 == 0
+					}
+				}
+				let id = random();
+				player.triggers.insert(id, Box::new(F(5)));
+				Ok(())
+			},
+			BlazeOfInsanity => {
+				if enemies.is_empty() {
+					Err(NeedsTarget)
+				} else if enemies.len() == 1 {
+					let mut enemy = enemies.remove(0);
+					let len = player.hand.len() as i64;
+					player.hand = Vec::new();
+					for _ in 0..len {
+						self.attack(6, player, &mut enemy, enemies);
+					}
+					enemies.insert(0, enemy);
+					Ok(())
+				} else if let Some(target) = target {
+					if enemies.len() > target {
+						let mut enemy = enemies.remove(target);
+						let len = player.hand.len() as i64;
+						player.hand = Vec::new();
+						for _ in 0..len {
+							self.attack(6, player, &mut enemy, enemies);
+						}
+						enemies.insert(target, enemy);
+						Ok(())
+					} else {
+						Err(BadTarget)
+					}
+				} else {
+					Err(NeedsTarget)
+				}
+				
+			},
 			_ => Err(PlayError::Unplayable),
 		}
 	}
@@ -176,6 +222,8 @@ impl Card {
 			CripplingStabs => Some(2),
 			SwordDraw => Some(1),
 			Barrier => Some(5),
+			Fortify => Some(1),
+			BlazeOfInsanity => Some(2),
 			Dazed => None,
 			Fear => None,
 			Unease => None,
@@ -192,6 +240,8 @@ impl Card {
 			CripplingStabs => Some(1),
 			SwordDraw => Some(1),
 			Barrier => Some(2),
+			Fortify => Some(1),
+			BlazeOfInsanity => Some(1),
 			Dazed => None,
 			Fear => None,
 			Unease => Some(-1),
@@ -220,6 +270,8 @@ impl Card {
 			CripplingStabs => format!("deal {} to target twice and reduce its strength by 2",(3+self.damage_modifier+player.strength).max(1)),
 			SwordDraw => format!("deal {} to target and gain 1 strength for 3 turns",(2+self.damage_modifier+player.strength).max(1)),
 			Barrier => format!("ethereal, gain {} block",(100+self.block_modifier).max(1)),
+			Fortify => format!("at the start of your next 5 turns gain 2 block"),
+			BlazeOfInsanity => format!("destroy all cards in your hand, deal {} damage to target for each card destroyed",(6+self.damage_modifier+player.strength).max(1)),
 			Dazed => format!("unplayable, undiscardable, ethereal"),
 			Fear => format!("unplayable, undiscardable, ethereal, when you draw this lose 3 mana"),
 			Unease => format!("unplayable, fleeting"),
@@ -290,6 +342,8 @@ impl fmt::Display for CardType {
 			CripplingStabs => write!(f,"crippling stabs"),
 			SwordDraw => write!(f,"sword draw"),
 			Barrier => write!(f,"barrier"),
+			Fortify => write!(f,"fortify"),
+			BlazeOfInsanity => write!(f,"blaze of insanity"),
 			Dazed => write!(f,"dazed"),
 			Fear => write!(f,"fear"),
 			Unease => write!(f,"unease"),
@@ -311,6 +365,7 @@ pub enum CardType {
 	CripplingStabs,
 	SwordDraw,
 	Barrier,
+	Fortify,
 	//status
 	Dazed,
 	Fear,
