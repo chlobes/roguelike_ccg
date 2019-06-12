@@ -266,6 +266,27 @@ impl Card {
 						Ok(())
 				}
 			},
+			DoubleEdgedSword => if enemies.is_empty() {
+				Err(NeedsTarget)
+			} else if enemies.len() == 1 {
+				let mut enemy = enemies.remove(0);
+				self.attack(25, player, &mut enemy, enemies);
+				enemies.insert(0, enemy);
+				player.damage(10, None, enemies);
+				Ok(())
+			} else if let Some(target) = target {
+				if enemies.len() > target {
+					let mut enemy = enemies.remove(target);
+					self.attack(25, player, &mut enemy, enemies);
+					enemies.insert(target, enemy);
+					player.damage(10, None, enemies);
+					Ok(())
+				} else {
+					Err(BadTarget)
+				}
+			} else {
+				Err(NeedsTarget)
+			},
 			_ => Err(PlayError::Unplayable),
 		}
 	}
@@ -319,6 +340,7 @@ impl Card {
 			BlazeOfInsanity => Some(2),
 			RecklessStrike => Some(1),
 			Madness => Some(1),
+			DoubleEdgedSword => Some(2),
 			Dazed => None,
 			Fear => None,
 			Unease => None,
@@ -339,6 +361,7 @@ impl Card {
 			BlazeOfInsanity => Some(1),
 			RecklessStrike => Some(1),
 			Madness => Some(0),
+			DoubleEdgedSword => Some(1),
 			Dazed => None,
 			Fear => None,
 			Unease => Some(-1),
@@ -371,6 +394,7 @@ impl Card {
 			BlazeOfInsanity => format!("destroy all cards in your hand, deal {} damage to target for each card destroyed",(6+self.damage_modifier+player.strength).max(1)),
 			RecklessStrike => format!("deal {} damage to target, gain 2 strength for 3 turns, all enemies gain 2 strength for 3 turns",(10+self.damage_modifier+player.strength).max(1)),
 			Madness => format!("if this card is in your hand at the end of your turn lose 1 hp. when played, deal {} damage to target enemy, reduce play cost of target card by 2",(6+self.damage_modifier+player.strength)),
+			DoubleEdgedSword => format!("deal {} damage to target, take 10 damage",(25+self.damage_modifier+player.strength)),
 			Dazed => format!("unplayable, undiscardable, ethereal"),
 			Fear => format!("unplayable, undiscardable, ethereal, when you draw this lose 3 mana"),
 			Unease => format!("unplayable, fleeting"),
@@ -447,6 +471,7 @@ impl fmt::Display for CardType {
 			BlazeOfInsanity => write!(f,"blaze of insanity"),
 			RecklessStrike => write!(f,"reckless strike"),
 			Madness => write!(f,"madness"),
+			DoubleEdgedSword => write!(f,"double edged sword"),
 			Dazed => write!(f,"dazed"),
 			Fear => write!(f,"fear"),
 			Unease => write!(f,"unease"),
@@ -472,6 +497,7 @@ pub enum CardType {
 	BlazeOfInsanity,
 	RecklessStrike,
 	Madness,
+	DoubleEdgedSword,
 	//status
 	Dazed,
 	Fear,
