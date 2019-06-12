@@ -83,7 +83,7 @@ fn main() {
 				player.start_turn(enemies);
 			},
 			Discard(n) => { player.discard(n, false, enemies); },
-			Play(n, target) => { player.play(n, target, enemies); },
+			Play(n, target1, target2) => { player.play(n, target1, target2, enemies); },
 			Save(mut path) => {
 				path += ".sav";
 				if let Ok(file) = std::fs::File::create(path) {

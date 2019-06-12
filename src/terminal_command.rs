@@ -3,7 +3,7 @@ pub enum Command {
 	Numbers(Vec<isize>),
 	End(usize),
 	Discard(usize),
-	Play(usize, Option<usize>),
+	Play(usize, Option<usize>, Option<usize>),
 	Yes,
 	No,
 	Save(String),
@@ -56,12 +56,16 @@ impl Parse for Command {
 					if let Ok(n) = w.parse() {
 						if let Some(w) = words.pop() {
 							if let Ok(n1) = w.parse() {
-								Some(Play(n, Some(n1)))
+								if let Ok(n2) = w.parse() {
+									Some(Play(n, Some(n1), Some(n2)))
+								} else {
+									Some(Play(n, Some(n1), None))
+								}
 							} else {
-								Some(Play(n, None))
+								Some(Play(n, None, None))
 							}
 						} else {
-							Some(Play(n, None))
+							Some(Play(n, None, None))
 						}
 					} else {
 						println!("'{}' is not a number",w);

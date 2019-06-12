@@ -148,7 +148,7 @@ impl Player {
 		} {}
 	}
 	
-	pub fn play(&mut self, n: usize, target: Option<usize>, enemies: &mut Vec<Enemy>) -> bool {
+	pub fn play(&mut self, n: usize, target1: Option<usize>, target2: Option<usize>, enemies: &mut Vec<Enemy>) -> bool {
 		if n < self.hand.len() {
 			let mut card = self.hand.remove(n);
 			if self.hand.iter().any(|c| c.interrupt(Action::Playing(&mut card), self, enemies)) || enemies.iter().any(|e| e.interrupt(Action::Playing(&mut card), self, enemies)) || self.equipment.interrupt(Action::Playing(&mut card), self, enemies) || self.interrupts.values().any(|i| i.interrupt(Action::Playing(&mut card), self, enemies)) {
@@ -156,14 +156,14 @@ impl Player {
 				false
 			} else {
 				if card.can_play(self.mana) {
-					if let Err(e) = card.play(target, self, enemies) {
+					if let Err(e) = card.play(target1, target2, self, enemies) {
 						use crate::card::PlayError::*;
 						match e {
 							NeedsTarget => {
-								println!("this cards needs to target an enemy");
+								println!("this cards needs more targets");
 							},
 							BadTarget => {
-								println!("this card cannot target that enemy");
+								println!("this card cannot target that");
 							},
 							Unplayable => {
 								println!("you cannot play this card right now");

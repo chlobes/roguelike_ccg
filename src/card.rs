@@ -5,12 +5,13 @@ use crate::enemy::ETrigger;
 pub struct Card {
 	pub damage_modifier: i64,
 	pub block_modifier: i64,
+	pub cost_modifier: i64,
 	pub typ: CardType,
 	pub data: Vec<i64>,
 }
 
 impl Card {
-	pub fn play(&mut self, target: Option<usize>, player: &mut Player, enemies: &mut Vec<Enemy>) -> Result<(), PlayError> {
+	pub fn play(&mut self, target: Option<usize>, target2: Option<usize>, player: &mut Player, enemies: &mut Vec<Enemy>) -> Result<(), PlayError> {
 		use self::PlayError::*;
 		match self.typ {
 			Strike => if enemies.is_empty() {
@@ -236,6 +237,35 @@ impl Card {
 					Err(NeedsTarget)
 				}
 			},
+			Madness => {
+				if (target2.is_none() || target2.map(|i| if i > player.hand.len() { true } else { player.hand[i].mana_cost().is_none() }).unwrap_or(false)) && player.hand.len() > 1 {
+					Err(NeedsTarget)
+				} else {
+					if enemies.is_empty() {
+						return Err(NeedsTarget);
+					} else if enemies.len() == 1 {
+						let mut enemy = enemies.remove(0);
+						self.attack(5, player, &mut enemy, enemies);
+						enemies.insert(0, enemy);
+					} else if let Some(target) = target {
+						if enemies.len() > target {
+							let mut enemy = enemies.remove(target);
+							self.attack(5, player, &mut enemy, enemies);
+							enemies.insert(target, enemy);
+						} else {
+							return Err(BadTarget);
+						}
+					} else {
+						return Err(NeedsTarget);
+					}
+					match player.hand.len() {
+						0 => {},
+						1 => player.hand[0].cost_modifier -= 2,
+						_ => player.hand[target2.unwrap()].cost_modifier -= 2,
+					}
+						Ok(())
+				}
+			},
 			_ => Err(PlayError::Unplayable),
 		}
 	}
@@ -288,12 +318,13 @@ impl Card {
 			Fortify => Some(1),
 			BlazeOfInsanity => Some(2),
 			RecklessStrike => Some(1),
+			Madness => Some(1),
 			Dazed => None,
 			Fear => None,
 			Unease => None,
 			Stress => None,
 			Exhaustion => None,
-		}
+		}.map(|x| (x + self.cost_modifier).max(0))
 	}
 	
 	pub fn discard_mana(&self) -> Option<i64> {
@@ -307,6 +338,7 @@ impl Card {
 			Fortify => Some(1),
 			BlazeOfInsanity => Some(1),
 			RecklessStrike => Some(1),
+			Madness => Some(0),
 			Dazed => None,
 			Fear => None,
 			Unease => Some(-1),
@@ -338,6 +370,7 @@ impl Card {
 			Fortify => format!("at the start of your next 5 turns gain 2 block"),
 			BlazeOfInsanity => format!("destroy all cards in your hand, deal {} damage to target for each card destroyed",(6+self.damage_modifier+player.strength).max(1)),
 			RecklessStrike => format!("deal {} damage to target, gain 2 strength for 3 turns, all enemies gain 2 strength for 3 turns",(10+self.damage_modifier+player.strength).max(1)),
+			Madness => format!("if this card is in your hand at the end of your turn lose 1 hp. when played, deal {} damage to target enemy, reduce play cost of target card by 2",(6+self.damage_modifier+player.strength)),
 			Dazed => format!("unplayable, undiscardable, ethereal"),
 			Fear => format!("unplayable, undiscardable, ethereal, when you draw this lose 3 mana"),
 			Unease => format!("unplayable, fleeting"),
@@ -377,6 +410,7 @@ impl Trigger for Card {
 	fn trigger(&mut self, a: Action, p: &mut Player, _e: &mut Vec<Enemy>) -> bool {
 		use self::Action::*;
 		match self.typ {
+			Madness => if let Action::EndTurn = a { p.hp -= 1; },
 			Exhaustion => match a {
 				Playing(_card) => p.hp -= 4,
 				Discarding(_card, _keep) => p.hp -= 4,
@@ -393,6 +427,7 @@ impl From<CardType> for Card {
 		Self {
 			damage_modifier: 0,
 			block_modifier: 0,
+			cost_modifier: 0,
 			typ,
 			data: Vec::new(),
 		}
@@ -410,7 +445,8 @@ impl fmt::Display for CardType {
 			Barrier => write!(f,"barrier"),
 			Fortify => write!(f,"fortify"),
 			BlazeOfInsanity => write!(f,"blaze of insanity"),
-			RecklessStrike => write!(f,"wreckless strike"),
+			RecklessStrike => write!(f,"reckless strike"),
+			Madness => write!(f,"madness"),
 			Dazed => write!(f,"dazed"),
 			Fear => write!(f,"fear"),
 			Unease => write!(f,"unease"),
@@ -435,6 +471,7 @@ pub enum CardType {
 	Fortify,
 	BlazeOfInsanity,
 	RecklessStrike,
+	Madness,
 	//status
 	Dazed,
 	Fear,
